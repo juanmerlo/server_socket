@@ -60,7 +60,7 @@
 //       close(socket);
 //       exit_gracefully(1);
 //    }
-//
+
 
     /*
        ** server.c -- Ejemplo de servidor de sockets de flujo
@@ -82,6 +82,9 @@
 
        #define BACKLOG 10     // Cuántas conexiones pendientes se mantienen en cola
 
+
+    #define MAXDATASIZE 100 // máximo número de bytes que se pueden leer de una vez
+
        void sigchld_handler(int s)
        {
            while(wait(NULL) > 0);
@@ -95,6 +98,10 @@
            int sin_size;
            struct sigaction sa;
            int yes=1;
+
+           int numbytes;
+           char buf[MAXDATASIZE];
+
 
            if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
                perror("socket");
@@ -137,11 +144,19 @@
                    perror("accept");
                    continue;
                }
-               printf("server: got connection from %s\n",
-                                                  inet_ntoa(their_addr.sin_addr));
+               printf("server: got connection from %s\n", inet_ntoa(their_addr.sin_addr));
+
+               if ((numbytes=recv(new_fd, buf, MAXDATASIZE-1, 0)) == -1) {
+                           perror("recv");
+                          exit(1);
+				   }
+               printf("Received from client: %s",buf);
+
+
+
                if (!fork()) { // Este es el proceso hijo
                    close(sockfd); // El hijo no necesita este descriptor
-                   if (send(new_fd, "Holaaaaa!\n", 14, 0) == -1)
+                   if (send(new_fd, "Hola client!\n", 14, 0) == -1)
                        perror("send");
                    close(new_fd);
                    exit(0);
